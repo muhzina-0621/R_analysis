@@ -1,0 +1,452 @@
+---
+title: "R_project"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+date: "2024-09-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# Predicting loan defaulters (Applied Credit risk modelling using classification and regression techniques
+#1.Using loandata.csv <br>
+
+# Reading the Dataset
+```{r cars}
+loan_data <- read.csv("C://Users/HP/Downloads/ComponentII_Datasets/ComponentII_Datasets/loan_data_set.csv")
+```
+
+## To check the dataset we print the 1st 5 values
+
+```{r pressure, echo=FALSE}
+head(loan_data,n=5)
+```
+## to check the structure of the datset
+```{r}
+str(loan_data)
+```
+# Data Visualizations
+## 1.Histogram of loan Amount
+```{r}
+hist_1 <- hist(loan_data$LoanAmount)
+```
+
+## 2.Histogram of Applicant Income
+```{r}
+hist_2 <- hist(loan_data$ApplicantIncome)
+```
+
+# Data Cleaning
+```{r}
+print("Count of total missing values  ")
+sum(is.na(loan_data))
+```
+```{r}
+#install.packages("tidyr")
+library(tidyr)
+
+#drop rows with missing values in any column
+```
+
+
+```{r}
+```
+
+
+```{r}
+loan_data <-drop_na( loan_data)
+print("Again Checking the total missing values  ")
+sum(is.na(loan_data))
+```
+##### Convert categorical variables to factors.
+```{r}
+# Convert categorical variables to factors
+loan_data$Gender <- as.factor(loan_data$Gender)
+loan_data$Married <- as.factor(loan_data$Married)
+loan_data$Dependents <- as.factor(loan_data$Dependents)
+loan_data$Education <- as.factor(loan_data$Education)
+loan_data$Self_Employed <- as.factor(loan_data$Self_Employed)
+loan_data$Property_Area <- as.factor(loan_data$Property_Area)
+loan_data$Loan_Status <- as.factor(loan_data$Loan_Status)
+
+```
+
+# Splitting into training and test datasets
+```{r}
+#install.packages("caTools")
+library(caTools)
+sp=sample.split(loan_data,SplitRatio = 0.8)
+train_set=subset(loan_data, sp== TRUE)
+test_set= subset(loan_data, sp== FALSE)
+nrow(train_set)
+nrow(test_set)
+```
+```{r}
+# Remove Loan_ID from the training and test sets
+library(dplyr)
+train_set <- train_set %>% select(-Loan_ID)
+test_set <- test_set %>% select(-Loan_ID)
+```
+
+#Sice Loan statust is a categorical variable we will be using classification techniques
+# Model 1: Logistic Regression Model:
+```{r}
+# Logistic Regression model
+logistic_model <- glm(Loan_Status ~ ., data = train_set, family = binomial)
+
+# Predict on test data
+logistic_pred <- predict(logistic_model, test_set, type = "response")
+
+# Convert probabilities to class labels
+logistic_class <- ifelse(logistic_pred > 0.5, "Y", "N")
+
+# Confusion Matrix
+library(caret)
+confusionMatrix(factor(logistic_class), test_set$Loan_Status)
+
+
+```
+
+#Random Forest 
+```{r}
+library(randomForest)
+# Random Forest model
+rf_model <- randomForest(Loan_Status ~ ., data = train_set)
+
+# Predict on test data
+rf_pred <- predict(rf_model, test_set)
+
+# Confusion Matrix
+library(caret)
+confusionMatrix(rf_pred, test_set$Loan_Status)
+
+```
+
+#2. german_credit_data.csv :
+```{r}
+data <- read.csv("C://Users/HP/Downloads/ComponentII_Datasets/ComponentII_Datasets/german_credit_data.csv")
+```
+
+## To check the dataset we print the 1st 5 values
+```{r}
+head(data,n=5)
+```
+### Structure of the data
+
+```{r}
+str(data)
+```
+# Data Visualizations
+## 1.Histogram of Credit Amount
+```{r}
+hist_3 <- hist(data$Credit.amount)
+```
+
+## 2.Histogram of Age
+
+```{r}
+hist_4 <- hist(data$Age)
+```
+
+# Data Cleaning:
+```{r}
+print("Count of total missing values  ")
+sum(is.na(data))
+colSums(is.na(data))
+```
+```{r}
+#install.packages("tidyr")
+library(tidyr)
+
+#drop rows with missing values in any column
+data <-drop_na(data)
+print("Again Checking the total missing values  ")
+sum(is.na(data))
+```
+
+```{r}
+# Dropping index-like columns 
+data <- data %>% select(-X)  # Assuming 'X' is an index column
+
+# Convert categorical variables to factors
+data$Sex <- as.factor(data$Sex)
+data$Housing <- as.factor(data$Housing)
+data$Saving.accounts <- as.factor(data$Saving.accounts)
+data$Checking.account <- as.factor(data$Checking.account)
+
+```
+
+# Splitting into training and test datasets
+```{r}
+library(caTools)
+sp=sample.split(data,SplitRatio = 0.8)
+train_set1=subset(data, sp== TRUE)
+test_set1= subset(data, sp== FALSE)
+nrow(train_set)
+nrow(test_set)
+```
+#since credit amount is a continous value we will be using regression for predicting the #credit amount values
+#Model 1: Regression
+```{r}
+# Train the Linear Regression model
+linear_model <- lm(Credit.amount ~ ., data = train_set1)
+
+# Summary of the model
+summary(linear_model)
+# Predict on test data
+linear_pred <- predict(linear_model, test_set1)
+# Calculate RMSE
+linear_rmse <- sqrt(mean((linear_pred - test_set1$Credit.amount)^2))
+print(paste("Linear Regression RMSE: ", linear_rmse))
+
+# Calculate R-squared
+linear_r_squared <- 1 - (sum((linear_pred - test_set1$Credit.amount)^2) / sum((mean(train_set1$Credit.amount) - test_set1$Credit.amount)^2))
+print(paste("Linear Regression R-squared: ", linear_r_squared))
+
+
+```
+#2.Random Forest
+
+```{r}
+# Load the randomForest library
+library(randomForest)
+
+# Train the Random Forest Regression model again this time for regression
+rf_model <- randomForest(Credit.amount ~ ., data = train_set1, ntree = 100)
+
+# View the model summary
+print(rf_model)
+# Predict on test data
+rf_pred <- predict(rf_model, test_set1)
+
+# Calculate RMSE (Root Mean Square Error)
+rmse <- sqrt(mean((rf_pred - test_set$Credit.amount)^2))
+print(paste("RMSE: ", rmse))
+
+# Calculate R-squared value to assess the model fit
+r_squared <- 1 - (sum((rf_pred - test_set1$Credit.amount)^2) / sum((mean(train_set1$Credit.amount) - test_set1$Credit.amount)^2))
+print(paste("R-squared: ", r_squared))
+
+
+
+```
+
+
+
+# 2.Stock Market Prediction 
+
+```{r}
+stock_data <- read.csv("C://Users/HP/Downloads/ComponentII_Datasets/ComponentII_Datasets/Smarket.csv")
+```
+
+```{r}
+head(stock_data,n=5)
+```
+##### to check the structure of the datset
+```{r}
+
+str(stock_data)
+summary(stock_data)
+```
+
+### Data Cleaning
+```{r}
+print("Count of total missing values  ")
+sum(is.na(stock_data))
+colSums(is.na(stock_data))
+```
+
+#### There are no empty vaues in the dataset
+
+```{r}
+
+# Convert 'Direction' (target variable) to a factor
+stock_data$Direction <- as.factor(stock_data$Direction)
+
+```
+
+##### Splitting into training and testing set
+```{r}
+# Split the data into training (before 2005) and testing sets (2005)
+train_set2 <- stock_data[stock_data$Year < 2005, ]
+test_set2 <- stock_data[stock_data$Year == 2005, ]
+nrow(train_set2)
+nrow(test_set2)
+```
+
+##### We will be implementing Logistic Regression and Random Forest models  to predict whether the market will go up (Direction as Up or Down)
+
+### 1.Logistic Regression Model
+```{r}
+# Logistic Regression model
+logistic_model <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, 
+                      data = train_set2, family = binomial)
+
+# Summary of the model
+summary(logistic_model)
+# Predict probabilities on the test data
+logistic_pred_prob <- predict(logistic_model, test_set2, type = "response")
+
+# Convert probabilities to binary 'Up' or 'Down'
+logistic_pred <- ifelse(logistic_pred_prob > 0.5, "Up", "Down")
+
+# Evaluate the model using confusion matrix
+confusionMatrix(factor(logistic_pred), test_set2$Direction)
+
+
+```
+# 2.Using TSLA.csv
+
+```{r}
+tsla_data <- read.csv("C://Users/HP/Downloads/ComponentII_Datasets/ComponentII_Datasets/TSLA.csv")
+```
+
+```{r}
+head(tsla_data,n=5)
+str(tsla_data)
+summary(tsla_data)
+```
+
+## Data Cleaning
+```{r}
+colSums(is.na(tsla_data))
+```
+```{r}
+# Create a new target variable: whether the next day's close is higher ('Up') or lower ('Down')
+library(dplyr)
+tsla_data <- tsla_data %>%
+  arrange(Date) %>%
+  mutate(Price_Change = ifelse(lead(Close) > Close, "Up", "Down"))
+
+```
+
+```{r}
+# Select relevant columns for modeling (we exclude 'Date' and 'Adj.Close' if it's the same as 'Close')
+model_data <- tsla_data %>%
+  select(Open, High, Low, Close, Volume, Price_Change)
+
+# Convert 'Price_Change' to a factor (for classification)
+model_data$Price_Change <- as.factor(model_data$Price_Change)
+
+```
+
+### Split the Data into Training and Testing Sets
+```{r}
+# Split the data into training (80%) and testing (20%) sets
+set.seed(123)
+library(caTools)
+sp=sample.split(model_data,SplitRatio = 0.8)
+train_set3=subset(model_data, sp== TRUE)
+test_set3= subset(model_data, sp== FALSE)
+nrow(train_set)
+nrow(test_set)
+```
+
+## Modeling
+```{r}
+# Logistic Regression model
+logistic_model <- glm(Price_Change ~ Open + High + Low + Close + Volume, 
+                      data = train_set3, family = binomial)
+
+# Summary of the model
+summary(logistic_model)
+
+```
+
+```{r}
+# Predict probabilities on the test set
+logistic_pred_prob <- predict(logistic_model, test_set3, type = "response")
+
+# Convert probabilities to binary classes 'Up' or 'Down'
+logistic_pred <- ifelse(logistic_pred_prob > 0.5, "Up", "Down")
+
+# Confusion Matrix for Logistic Regression
+confusionMatrix(factor(logistic_pred), test_set3$Price_Change)
+
+```
+
+
+# 3.Using the “Mall Customers” dataset, implement customer segmentation by applying clustering techniques in R. 
+
+### Data Reading
+```{r}
+mall_data <- read.csv("C://Users/HP/Downloads/ComponentII_Datasets/ComponentII_Datasets/Mall_Customers.csv")
+```
+
+```{r}
+head(mall_data,n=5)
+str(mall_data)
+summary(mall_data)
+```
+
+```{r}
+# Select relevant columns for clustering
+customer_data <- mall_data %>% select(Annual.Income..k.., Spending.Score..1.100.)
+
+# Scale the data (optional, but recommended for K-means)
+scaled_data <- scale(customer_data)
+
+```
+
+
+# Using K means for Clustering 
+```{r}
+#install.packages("factoextra")
+```
+
+```{r}
+library(factoextra)
+# Use the elbow method to determine the optimal number of clusters
+fviz_nbclust(scaled_data, kmeans, method = "wss")
+
+```
+
+```{r}
+# Set the number of clusters (based on the elbow plot)
+set.seed(123)
+kmeans_model <- kmeans(scaled_data, centers = 5, nstart = 25)
+
+# Add cluster assignment to the original data
+mall_data$Cluster <- as.factor(kmeans_model$cluster)
+
+# Visualize the clusters
+fviz_cluster(kmeans_model, data = scaled_data, 
+             geom = "point", stand = FALSE,
+             ellipse.type = "norm", show.clust.cent = TRUE,
+             ggtheme = theme_minimal())
+
+```
+
+### Second Model : Hierarchial model
+```{r}
+# Compute the distance matrix
+dist_matrix <- dist(scaled_data, method = "euclidean")
+
+```
+
+```{r}
+# Apply hierarchical clustering using Ward's method
+hclust_model <- hclust(dist_matrix, method = "ward.D2")
+
+# Plot the dendrogram
+plot(hclust_model, cex = 0.6, hang = -1)
+rect.hclust(hclust_model, k = 5, border = 2:6)  # Cut tree into 5 clusters
+
+```
+
+## Model Evaluation and Interpretation
+```{r}
+# Review the cluster centers for K-means
+kmeans_model$centers
+
+# Review the size of each cluster
+table(mall_data$Cluster)
+
+```
+
