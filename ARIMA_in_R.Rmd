@@ -1,0 +1,86 @@
+---
+title: "TimeSeries_analysis"
+output: html_document
+date: "2024-09-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is a R markdown to implement a time sries analysis on a time series sales data of 3 years
+
+```{r cars}
+install.packages("forecast")
+```
+
+## Including  packages
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+library(forecast)
+library(ggplot2)
+```
+
+#Creating a synthetic dataset
+```{r}
+set.seed(123)
+n_months<- 36
+#generate a very synthetic dataset
+time<- seq(from=as.Date("2021-01-01"),by="month",length.out=n_months)
+sales<- ts(rnorm(n_months,mean=2000,sd=500),frequency=12,start=c(2021,1))
+
+#together creating a dataframe
+sales_data<-data.frame(Date=time,Sales=as.numeric(sales))
+```
+
+```{r}
+sales_data
+```
+## Plotting sales data
+```{r}
+ggplot(sales_data, aes(x=Date, y=Sales))+geom_line()+labs(title="Monthly Sales Data",x="Date",y="Sales")+theme_minimal()
+```
+
+#Fitting a ARIMA model:
+```{r}
+#Fit the ARIMA model
+fit<- auto.arima(sales)
+
+#Summary of the model
+summary(fit)
+```
+#Forecasting Future Sales:
+```{r}
+#forecast the next 12 months
+forecast_period<- 12
+
+sales_forecast <-forecast(fit,h=forecast_period)
+
+sales_forecast
+```
+```{r}
+#forecast the next 24 months
+forecast_period<- 24
+
+sales_forecast <-forecast(fit,h=forecast_period)
+
+sales_forecast
+```
+#Plotting the historical and future data
+```{r}
+autoplot(sales_forecast)+ggtitle("Sales Forecast using ARIMA")+xlab("Date")+ylab("Sales")+theme_minimal()
+```
+#Evaluate the model
+```{r}
+#plot the residuals
+checkresiduals(fit)
+```
+# Accuracy of the variable
+```{r}
+accuracy(fit)
+```
+
